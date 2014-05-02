@@ -27,6 +27,22 @@ public class ObjectFactory {
     }
 
 
+    public static <T> T InstanceOf(Class<T> classType, String name) {
+
+        T result = null;
+
+
+        //Find instance, if found, return instance
+        result = FindInstance(classType, name);
+        if (result != null) {
+            if (debugMode) System.out.println("Object '" + classType + "' found: FindInstance");
+            return result;
+        }
+
+        return result;
+
+    }
+
     public static <T> T InstanceOf(Class<T> classType) {
 
         List<StackTraceElement> stackTraceElements = new ArrayList<StackTraceElement>();
@@ -34,7 +50,7 @@ public class ObjectFactory {
 
 
         //Find instance, if found, return instance
-        result = FindInstance(classType);
+        result = FindInstance(classType, null);
         if (result != null) {
             if (debugMode) System.out.println("Object '" + classType + "' found: FindInstance");
             return result;
@@ -66,10 +82,10 @@ public class ObjectFactory {
         return null;
     }
 
-    private static <T> T FindInstance(Class<T> classType) {
+    private static <T> T FindInstance(Class<T> classType, String name) {
 
         for (ObjectClass cClass : objectClasses) {
-            if (cClass.getClassType() == classType) {
+            if (cClass.getClassType() == classType && (name == null || cClass.getName().equals(name))) {
                 return cClass.getInstance();
             }
         }
