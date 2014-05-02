@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -46,7 +47,7 @@ public class ObjectFactory {
 
     public static <T> T InstanceOf(Class<T> classType) {
 
-         T result = null;
+        T result = null;
 
 
         //Find instance, if found, return instance
@@ -154,5 +155,28 @@ public class ObjectFactory {
         return result;
     }
 
+    public static void Scan(String packageName) {
 
+
+        HashMap<String, Class<?>> classes = ClassEnumerator.getClassesForPackage(packageName);
+
+
+        for(String className : classes.keySet()) {
+
+            if (!className.startsWith("I")) {
+                Class<?> iface = classes.get("I" + className);
+
+                if (iface != null) {
+
+                    Class<?> cls = classes.get(className);
+                    Object clsInstance = InstanceOf(cls);
+
+                    if (cls != null && clsInstance != null) {
+                        For(iface).Use(clsInstance);
+                    }
+                }
+            }
+        }
+
+    }
 }

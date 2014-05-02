@@ -5,14 +5,14 @@ package nl.leeuwte.objectfactory.nl.leeuwte.objectfactory.objects;
  */
 public class Fiets implements IVervoer {
 
-    private final Auto auto;
+    private final Car car;
 
-    public Fiets(Auto auto) {
-      this.auto = auto;
+    public Fiets(Car car) {
+      this.car = car;
     }
 
-    @Override
+//    @Override
     public String getAandrijving() {
-        return "trappers " + auto.getAandrijving();
+        return "trappers " + car.getAandrijving();
     }
 }
