@@ -12,8 +12,8 @@ public class Auto implements IVervoer {
         this.soort = soort;
     }
 
-    @Override
+    //    @Override
     public String getAandrijving() {
-        return "brandstofmotor " + soort;
+        return "brandstofmotor '" + soort + "'";
     }
 }

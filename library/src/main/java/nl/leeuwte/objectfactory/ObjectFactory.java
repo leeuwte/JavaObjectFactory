@@ -3,6 +3,7 @@ package nl.leeuwte.objectfactory;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -10,7 +11,10 @@ import java.util.List;
  */
 public class ObjectFactory {
 
+    private static boolean debugMode = false;
     private static List<ObjectClass> objectClasses = new ArrayList<ObjectClass>();
+
+    private static Class[] unconstructableClasses = new Class[]{String.class};
 
     public static <T> ObjectClass For(T classType) {
         ObjectClass oc = new ObjectClass(classType);
@@ -18,33 +22,47 @@ public class ObjectFactory {
         return oc;
     }
 
+    public static void SetDebug(boolean enabled) {
+        debugMode = enabled;
+    }
+
 
     public static <T> T InstanceOf(Class<T> classType) {
 
+        List<StackTraceElement> stackTraceElements = new ArrayList<StackTraceElement>();
         T result = null;
+
 
         //Find instance, if found, return instance
         result = FindInstance(classType);
         if (result != null) {
+            if (debugMode) System.out.println("Object '" + classType + "' found: FindInstance");
             return result;
         }
 
 
         //Nothing found yet, try to create instance with parameterless constructor
-        result = CreateSimpleInstance(classType);
+        result = ConstructSimpleInstance(classType, stackTraceElements);
         if (result != null) {
+            if (debugMode) System.out.println("Object '" + classType + "' created: ConstructSimpleInstance");
             For(classType).Use(result);
             return result;
         }
 
-        //Still nothing found, try to construct instance with paramterfull constructur
-        result = ConstructInstance(classType);
+        //Still nothing found, try to construct instance with parameterfull constructur
+        result = ConstructInstance(classType, stackTraceElements);
         if (result != null) {
+            if (debugMode) System.out.println("Object '" + classType + "' created: ConstructInstance");
             For(classType).Use(result);
             return result;
         }
 
         //Arghh...  nothing found, return null...
+        //System.out.print(stackTraceElements);
+
+        System.out.println("Cannot find or construct " + classType + ".");
+
+
         return null;
     }
 
@@ -59,23 +77,35 @@ public class ObjectFactory {
 
     }
 
-    private static <T> T CreateSimpleInstance(Class<T> classType) {
+    private static <T> T ConstructSimpleInstance(Class<T> classType, List<StackTraceElement> stackTraceElements) {
 
         T result = null;
 
         try {
+
+
+            //Exclude unconstructableClasses from default construction
+            if (Arrays.asList(unconstructableClasses).contains(classType))
+                throw new InstantiationException();
+
             result = classType.newInstance();
         } catch (InstantiationException e) {
-            //e.printStackTrace();
+            stackTraceElements.addAll(Arrays.asList(e.getStackTrace()));
+
         } catch (IllegalAccessException e) {
-            //e.printStackTrace();
+            stackTraceElements.addAll(Arrays.asList(e.getStackTrace()));
+
         }
 
 
         return result;
     }
 
-    private static <T> T ConstructInstance(Class<T> classType) {
+    private static <T> T ConstructInstance(Class<T> classType, List<StackTraceElement> stackTraceElements) {
+
+        //Exclude unconstructableClasses from instance construction
+        if (Arrays.asList(unconstructableClasses).contains(classType))
+            return null;
 
         T result = null;
 
@@ -92,16 +122,17 @@ public class ObjectFactory {
                 Class<?> ptype = parameterTypes[i];
 
                 parameters[i] = InstanceOf(ptype);
+
             }
 
             try {
                 result = (T) ctor.newInstance(parameters);
             } catch (InstantiationException e) {
-                //e.printStackTrace();
+                stackTraceElements.addAll(Arrays.asList(e.getStackTrace()));
             } catch (IllegalAccessException e) {
-                //e.printStackTrace();
+                stackTraceElements.addAll(Arrays.asList(e.getStackTrace()));
             } catch (InvocationTargetException e) {
-                //e.printStackTrace();
+                stackTraceElements.addAll(Arrays.asList(e.getStackTrace()));
             }
 
         }
