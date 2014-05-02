@@ -12,6 +12,7 @@ import java.util.List;
 public class ObjectFactory {
 
     private static boolean debugMode = false;
+
     private static List<ObjectClass> objectClasses = new ArrayList<ObjectClass>();
 
     private static Class[] unconstructableClasses = new Class[]{String.class};
@@ -45,8 +46,7 @@ public class ObjectFactory {
 
     public static <T> T InstanceOf(Class<T> classType) {
 
-        List<StackTraceElement> stackTraceElements = new ArrayList<StackTraceElement>();
-        T result = null;
+         T result = null;
 
 
         //Find instance, if found, return instance
@@ -58,7 +58,7 @@ public class ObjectFactory {
 
 
         //Nothing found yet, try to create instance with parameterless constructor
-        result = ConstructSimpleInstance(classType, stackTraceElements);
+        result = ConstructSimpleInstance(classType);
         if (result != null) {
             if (debugMode) System.out.println("Object '" + classType + "' created: ConstructSimpleInstance");
             For(classType).Use(result);
@@ -66,7 +66,7 @@ public class ObjectFactory {
         }
 
         //Still nothing found, try to construct instance with parameterfull constructur
-        result = ConstructInstance(classType, stackTraceElements);
+        result = ConstructInstance(classType);
         if (result != null) {
             if (debugMode) System.out.println("Object '" + classType + "' created: ConstructInstance");
             For(classType).Use(result);
@@ -93,7 +93,7 @@ public class ObjectFactory {
 
     }
 
-    private static <T> T ConstructSimpleInstance(Class<T> classType, List<StackTraceElement> stackTraceElements) {
+    private static <T> T ConstructSimpleInstance(Class<T> classType) {
 
         T result = null;
 
@@ -106,10 +106,8 @@ public class ObjectFactory {
 
             result = classType.newInstance();
         } catch (InstantiationException e) {
-            stackTraceElements.addAll(Arrays.asList(e.getStackTrace()));
 
         } catch (IllegalAccessException e) {
-            stackTraceElements.addAll(Arrays.asList(e.getStackTrace()));
 
         }
 
@@ -117,7 +115,7 @@ public class ObjectFactory {
         return result;
     }
 
-    private static <T> T ConstructInstance(Class<T> classType, List<StackTraceElement> stackTraceElements) {
+    private static <T> T ConstructInstance(Class<T> classType) {
 
         //Exclude unconstructableClasses from instance construction
         if (Arrays.asList(unconstructableClasses).contains(classType))
@@ -144,11 +142,11 @@ public class ObjectFactory {
             try {
                 result = (T) ctor.newInstance(parameters);
             } catch (InstantiationException e) {
-                stackTraceElements.addAll(Arrays.asList(e.getStackTrace()));
+
             } catch (IllegalAccessException e) {
-                stackTraceElements.addAll(Arrays.asList(e.getStackTrace()));
+
             } catch (InvocationTargetException e) {
-                stackTraceElements.addAll(Arrays.asList(e.getStackTrace()));
+
             }
 
         }

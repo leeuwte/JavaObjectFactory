@@ -11,7 +11,6 @@ public class ObjectClass {
 
     public <T> ObjectClass(T classType) {
         this.classType = (Class) classType;
-
     }
 
     public <T> ObjectClass Use(T instance) {

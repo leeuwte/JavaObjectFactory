@@ -1,2 +1,5 @@
 rootProject.name = 'JavaObjectFactory'
 
+include ':library'
+
+
