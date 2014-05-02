@@ -27,7 +27,7 @@ local.properties
 # Gradle stuff
 .gradle/
 build/
-
+*.gradle~
 
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm
 
