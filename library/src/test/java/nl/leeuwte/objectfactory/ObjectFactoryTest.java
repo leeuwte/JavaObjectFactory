@@ -1,49 +1,108 @@
 package nl.leeuwte.objectfactory;
 
-import nl.leeuwte.objectfactory.nl.leeuwte.objectfactory.objects.Car;
-import nl.leeuwte.objectfactory.nl.leeuwte.objectfactory.objects.IVervoer;
+import nl.leeuwte.objectfactory.nl.leeuwte.objectfactory.objects.*;
+import org.junit.Before;
 import org.junit.Test;
+
+import static junit.framework.Assert.assertNotSame;
+import static junit.framework.TestCase.assertEquals;
 
 public class ObjectFactoryTest {
 
+    @Before
+    public void reset() {
+        ObjectFactory.Reset();
+    }
+
+    @Test
+    public void testSimpleClassWithImplementation() throws Exception {
+
+
+        ObjectFactory.For(Car.class).Use(new Car("fuel"));
+        Car c = ObjectFactory.InstanceOf(Car.class);
+
+        assertEquals(c.getAandrijving(), "fuel");
+
+    }
+
+    @Test
+    public void testSimpleClassWithName() throws Exception {
+
+        ObjectFactory.For(Car.class).Use(new Car("aaaa"));
+        ObjectFactory.For(Car.class).Use(new Car("bbbb")).Name("bcar");
+
+        Car c = ObjectFactory.InstanceOf(Car.class, "bcar");
+
+        assertEquals(c.getAandrijving(), "bbbb");
+
+    }
 
 
     @Test
-    public void testDi1() throws Exception {
+    public void testInterfaceWithClassType() throws Exception {
 
-        initFactory();
+        ObjectFactory.For(IVervoer.class).Use(Brommer.class);
 
+        IVervoer iv = ObjectFactory.InstanceOf(IVervoer.class);
 
-//        Brommer b = ObjectFactory.InstanceOf(Brommer.class);
-//        System.out.println(b.getAandrijving());
+        assertEquals(iv.getAandrijving(), "brommer");
 
-        Car x = ObjectFactory.InstanceOf(Car.class, "benzineauto");
-        System.out.println(x.getAandrijving());
-        Car y = ObjectFactory.InstanceOf(Car.class, "dieselauto");
-        System.out.println(y.getAandrijving());
-        Car z = ObjectFactory.InstanceOf(Car.class);
-        System.out.println(z.getAandrijving());
-
-//        Fiets f = ObjectFactory.InstanceOf(Fiets.class);
-//        System.out.println(f.getAandrijving());
-
-        IVervoer i = ObjectFactory.InstanceOf(IVervoer.class);
-        System.out.println(i.getAandrijving());
-
-//        Brommer b2 = ObjectFactory.InstanceOf(Brommer.class);
-//        System.out.println(b2.getAandrijving());
-    }
-
-    private void initFactory() {
-
-        //ObjectFactory.For(Auto.class).Use(new Auto("diesel"));
-        ObjectFactory.For(Car.class).Use(new Car("benzine")).Name("benzineauto");
-        ObjectFactory.For(Car.class).Use(new Car("diesel")).Name("dieselauto");
-
-        String packageName = getClass().getPackage().getName();
-
-        ObjectFactory.Scan(packageName);
 
     }
+
+
+    @Test
+    public void testClassWithoutClassType() throws Exception {
+
+        Brommer b = ObjectFactory.InstanceOf(Brommer.class);
+
+        assertEquals(b.getAandrijving(), "brommer");
+    }
+
+    @Test
+    public void testIfClassesAreDifferent() throws Exception {
+
+
+        Brommer b1 = ObjectFactory.InstanceOf(Brommer.class);
+        Brommer b2 = ObjectFactory.InstanceOf(Brommer.class);
+
+
+        assertNotSame(b1, b2);
+    }
+
+
+    @Test
+    public void testIfClassesAreDifferentWithInstance() throws Exception {
+
+        ObjectFactory.For(Brommer.class).AsSingleton();
+
+        Brommer b1 = ObjectFactory.InstanceOf(Brommer.class);
+        Brommer b2 = ObjectFactory.InstanceOf(Brommer.class);
+
+        assertEquals(b1, b2);
+    }
+
+    @Test
+    public void testConstructClassInConstructor() throws Exception {
+
+        ObjectFactory.For(Car.class).Use(new Car("car"));
+
+        Fiets f = ObjectFactory.InstanceOf(Fiets.class);
+
+        assertEquals(f.getAandrijving(), "trappers car");
+    }
+
+
+    @Test
+    public void testConstructInterfaceInConstructor() throws Exception {
+
+        ObjectFactory.For(IVervoer.class).Use(new Car("car"));
+
+        Plane f = ObjectFactory.InstanceOf(Plane.class);
+
+        assertEquals(f.getAandrijving(), "straalmotor car");
+
+    }
+
 
 }

@@ -6,14 +6,15 @@ package nl.leeuwte.objectfactory.nl.leeuwte.objectfactory.objects;
 public class Car implements IVervoer {
 
 
-    private final String soort;
+    private String type = "default";
 
-    public Car(String soort) {
-        this.soort = soort;
+    public Car(String type) {
+        this.type = type;
     }
 
-    //    @Override
+
+    @Override
     public String getAandrijving() {
-        return "brandstofmotor '" + soort + "'";
+        return type;
     }
 }

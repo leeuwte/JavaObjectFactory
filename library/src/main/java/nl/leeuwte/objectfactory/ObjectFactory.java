@@ -14,18 +14,23 @@ public class ObjectFactory {
 
     private static boolean debugMode = false;
 
-    private static List<ObjectClass> objectClasses = new ArrayList<ObjectClass>();
+    private static List<ObjectClass> objectInstances = new ArrayList<ObjectClass>();
 
     private static Class[] unconstructableClasses = new Class[]{String.class};
 
     public static <T> ObjectClass For(T classType) {
         ObjectClass oc = new ObjectClass(classType);
-        objectClasses.add(oc);
+        objectInstances.add(oc);
         return oc;
     }
 
     public static void SetDebug(boolean enabled) {
         debugMode = enabled;
+    }
+
+    public static void Reset() {
+
+        objectInstances.clear();
     }
 
 
@@ -36,6 +41,7 @@ public class ObjectFactory {
 
         //Find instance, if found, return instance
         result = FindInstance(classType, name);
+
         if (result != null) {
             if (debugMode) System.out.println("Object '" + classType + "' found: FindInstance");
             return result;
@@ -49,12 +55,22 @@ public class ObjectFactory {
 
         T result = null;
 
+        ObjectClass oClass = FindObjectClass(classType, null);
 
         //Find instance, if found, return instance
-        result = FindInstance(classType, null);
+        result = FindInstance(oClass, null);
+
         if (result != null) {
-            if (debugMode) System.out.println("Object '" + classType + "' found: FindInstance");
-            return result;
+
+            if (result instanceof Class) {
+                Class<T> resultClassType = (Class<T>) result;
+                if (resultClassType != classType) {
+                    return InstanceOf(resultClassType);
+                }
+            } else {
+                if (debugMode) System.out.println("Object '" + classType + "' found: FindInstance");
+                return result;
+            }
         }
 
 
@@ -62,7 +78,9 @@ public class ObjectFactory {
         result = ConstructSimpleInstance(classType);
         if (result != null) {
             if (debugMode) System.out.println("Object '" + classType + "' created: ConstructSimpleInstance");
-            For(classType).Use(result);
+            if (oClass != null && oClass.isSingleton()) {
+                oClass.Use(result);
+            }
             return result;
         }
 
@@ -70,7 +88,9 @@ public class ObjectFactory {
         result = ConstructInstance(classType);
         if (result != null) {
             if (debugMode) System.out.println("Object '" + classType + "' created: ConstructInstance");
-            For(classType).Use(result);
+            if (oClass != null && oClass.isSingleton()) {
+                oClass.Use(result);
+            }
             return result;
         }
 
@@ -83,23 +103,50 @@ public class ObjectFactory {
         return null;
     }
 
-    private static <T> T FindInstance(Class<T> classType, String name) {
+    private static <T> T FindInstance(ObjectClass oClass, String name) {
 
-        for (ObjectClass cClass : objectClasses) {
-            if (cClass.getClassType() == classType && (name == null || cClass.getName().equals(name))) {
-                return cClass.getInstance();
-            }
+        if (oClass == null)
+            return null;
+
+        if (oClass.getClassType() == oClass.getClassType() && (name == null || (oClass.getName() != null && oClass.getName().equals(name)))) {
+            return oClass.getInstance();
         }
+
         return null;
 
     }
 
+    private static <T> T FindInstance(Class<T> classType, String name) {
+
+        ObjectClass oClass = FindObjectClass(classType, name);
+
+        T result = FindInstance(oClass, name);
+
+        if (result != null)
+            return result;
+
+
+        return null;
+
+    }
+
+    private static <T> ObjectClass FindObjectClass(Class<T> classType, String name) {
+        for (ObjectClass oClass : objectInstances) {
+            if (oClass.getClassType() == classType && (name == null || (oClass.getName() != null && oClass.getName().equals(name)))) {
+                return oClass;
+            }
+        }
+        return null;
+    }
+
+
     private static <T> T ConstructSimpleInstance(Class<T> classType) {
+
 
         T result = null;
 
-        try {
 
+        try {
 
             //Exclude unconstructableClasses from default construction
             if (Arrays.asList(unconstructableClasses).contains(classType))
@@ -125,43 +172,47 @@ public class ObjectFactory {
         T result = null;
 
         Constructor<?>[] constructors = classType.getConstructors();
+        try {
 
-        for (Constructor<?> ctor : constructors) {
+            for (Constructor<?> ctor : constructors) {
 
-            Class<?>[] parameterTypes = ctor.getParameterTypes();
+                Class<?>[] parameterTypes = ctor.getParameterTypes();
 
-            Object[] parameters = new Object[parameterTypes.length];
+                Object[] parameters = new Object[parameterTypes.length];
 
-            for (int i = 0; i < parameters.length; i++) {
+                for (int i = 0; i < parameters.length; i++) {
 
-                Class<?> ptype = parameterTypes[i];
+                    Class<?> ptype = parameterTypes[i];
 
-                parameters[i] = InstanceOf(ptype);
+                    parameters[i] = InstanceOf(ptype);
 
-            }
+                    if (parameters[i] == null)
+                        throw new InstantiationException();
 
-            try {
+                }
+
                 result = (T) ctor.newInstance(parameters);
-            } catch (InstantiationException e) {
-
-            } catch (IllegalAccessException e) {
-
-            } catch (InvocationTargetException e) {
-
             }
+        } catch (InstantiationException e) {
+
+        } catch (IllegalAccessException e) {
+
+        } catch (InvocationTargetException e) {
 
         }
+
 
         return result;
     }
 
+    @Deprecated
     public static void Scan(String packageName) {
 
 
         HashMap<String, Class<?>> classes = ClassEnumerator.getClassesForPackage(packageName);
 
 
-        for(String className : classes.keySet()) {
+        for (String className : classes.keySet()) {
 
             if (!className.startsWith("I")) {
                 Class<?> iface = classes.get("I" + className);
@@ -179,4 +230,5 @@ public class ObjectFactory {
         }
 
     }
+
 }

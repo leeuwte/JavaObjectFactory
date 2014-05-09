@@ -7,6 +7,6 @@ public class Brommer implements  IVervoer {
 
     @Override
     public String getAandrijving() {
-        return "2takt motor";
+        return "brommer";
     }
 }
